@@ -14,11 +14,11 @@ just 'fix' their reputations.
 Requirements:
 -------------
 - Memcached
+- Ruby (1.9 tested)
 - Gems
   - Datamapper (dm-core)
     - Data store for Datamapper (do_sqlite3/do_mysql/do_postgres)
-  - Starling (starling)
-  - Memcache-client (memcache-client)
+  - Starling (starling-starling)
   - Memcached (memcached)
   - Thin (thin)
 
@@ -29,6 +29,14 @@ Running:
 If you also want a database backing up memcache:
 - Start starling (starling -q /tmp/starling -P /tmp/starling.pid)
 - ruby be_sqlite.rb
+
+Using:
+------
+Infamy presents a simple REST API.
+To get a user's reputation score:
+  http://localhost:4444/score/1:111
+To add to a user's score (can be positive or negative):
+  http://localhost:4444/add/1:111/-10
 
 Notes:
 - Memcache always stores official score for a given user.

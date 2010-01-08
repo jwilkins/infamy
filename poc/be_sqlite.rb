@@ -3,8 +3,8 @@ require 'dm-core'
 require 'starling'
 require 'memcache'
 
-#DataMapper.setup(:default, 'sqlite3::memory:')
-DataMapper.setup(:default, 'sqlite3://abusers.sqlite3')
+ROOT_DIR=File.dirname(__FILE__)
+DataMapper.setup(:default, "sqlite3:#{ROOT_DIR}/abusers.sqlite3")
 
 class Abuser
   include DataMapper::Resource
@@ -41,6 +41,7 @@ while true
     next if user[:stored_at] && user[:stored_at] > user[:updated_at]
     abuser = Abuser.first(uid) || Abuser.new
     abuser.update(:uid => uid, :score => user[:score], :updated_at => Time.now)
+    abuser.save
     user[:stored_at] = Time.now
     cache.set(uid, user)
   rescue

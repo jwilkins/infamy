@@ -51,6 +51,9 @@ class InfamyFE
       score = user[:score] + amount.to_i
       set_score(uid, score)
       body = score.to_s
+    when 'set'
+      set_score(uid, amount)
+      body = score.to_s
     else
       status = 404
       body = "Undefined url"
