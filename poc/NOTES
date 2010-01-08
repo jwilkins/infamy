@@ -1,0 +1,85 @@
+Against fe_thin_kv.rb
+jwilkins@jwilkins-mbp> ab -c 50 -n 10000 http://127.0.0.1:4444/score/1:111
+
+Server Software:        thin
+Server Hostname:        127.0.0.1
+Server Port:            4444
+
+Document Path:          /score/1:111
+Document Length:        3 bytes
+
+Concurrency Level:      50
+Time taken for tests:   7.873 seconds
+Complete requests:      10000
+Failed requests:        0
+Write errors:           0
+Total transferred:      1400700 bytes
+HTML transferred:       30015 bytes
+Requests per second:    1270.11 [#/sec] (mean)
+Time per request:       39.367 [ms] (mean)
+Time per request:       0.787 [ms] (mean, across all concurrent requests)
+Transfer rate:          173.73 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    1   0.9      0      19
+Processing:    20   39  13.1     37     121
+Waiting:       16   32  12.2     30     116
+Total:         21   39  13.1     37     121
+WARNING: The median and mean for the initial connection time are not within a normal deviation
+        These results are probably not that reliable.
+
+Percentage of the requests served within a certain time (ms)
+  50%     37
+  66%     41
+  75%     43
+  80%     44
+  90%     49
+  95%     55
+  98%     98
+  99%    106
+ 100%    121 (longest request)
+
+
+Against fe_thin_obj.rb
+jwilkins@jwilkins-mbp> ab -c 50 -n 10000 http://127.0.0.1:4444/score/1:111
+
+Server Software:        thin
+Server Hostname:        127.0.0.1
+Server Port:            4444
+
+Document Path:          /score/1:111
+Document Length:        3 bytes
+
+Concurrency Level:      50
+Time taken for tests:   11.896 seconds
+Complete requests:      10000
+Failed requests:        0
+Write errors:           0
+Total transferred:      1400000 bytes
+HTML transferred:       30000 bytes
+Requests per second:    840.59 [#/sec] (mean)
+Time per request:       59.482 [ms] (mean)
+Time per request:       1.190 [ms] (mean, across all concurrent requests)
+Transfer rate:          114.92 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    1   0.9      0      16
+Processing:    22   59  23.6     55     215
+Waiting:       14   49  21.4     45     205
+Total:         24   59  23.6     55     215
+WARNING: The median and mean for the initial connection time are not within a normal deviation
+        These results are probably not that reliable.
+
+Percentage of the requests served within a certain time (ms)
+  50%     55
+  66%     64
+  75%     69
+  80%     72
+  90%     85
+  95%    100
+  98%    135
+  99%    148
+ 100%    215 (longest request)
+

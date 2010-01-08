@@ -1,0 +1,39 @@
+Infamy - Simple Reputation Management
+
+Infamy uses memcache to provide a super simple, reasonably fast reputation
+management/abuse detection system.
+
+Infamy can run without a database store (which is enough for detecting
+certain types of abuse), but using a DB for long term reputation is
+recommended.
+
+Infamy doesn't authenticate connections by default (but it does bind only
+to localhost), so don't expose it to the world, otherwise attackers can 
+just 'fix' their reputations.
+
+Requirements:
+-------------
+- Memcached
+- Gems
+  - Datamapper (dm-core)
+    - Data store for Datamapper (do_sqlite3/do_mysql/do_postgres)
+  - Starling (starling)
+  - Memcache-client (memcache-client)
+  - Memcached (memcached)
+  - Thin (thin)
+
+Running:
+--------
+- Start memcached
+- ruby fe_thin.rb
+If you also want a database backing up memcache:
+- Start starling (starling -q /tmp/starling -P /tmp/starling.pid)
+- ruby be_sqlite.rb
+
+Notes:
+- Memcache always stores official score for a given user.
+- User info is a hash which contains update time and score
+- Use starling to add updates to a queue
+- Keep track of update time (updated_at) and time written to persistent
+  storage (stored_at) in memcache record
+
