@@ -25,7 +25,7 @@ class InfamyFE
   end
 
   def set_score(uid, score)
-    user = {:score => score, :updated_at => Time.now, :stored_at => nil}
+    user = {:score => score.to_i, :updated_at => Time.now, :stored_at => nil}
     begin
       @cache.set(uid, user)
     rescue
@@ -41,20 +41,32 @@ class InfamyFE
 
   def call(env)
     status = 200
+    ip_addr = '0.0.0.0'
+
     nothing, command, uid, amount = env['PATH_INFO'].split('/')
+    return [400, {'Content-Type' => 'text/plain'}, 'Error (command)'] unless command
+    return [400, {'Content-Type' => 'text/plain'}, 'Error (uid)'] unless uid
+
+    ip_addr = $1 if env['HTTP_X_ORIGINATING_IP'] =~ /([\d]+\.[\d]+\.[\d]+\.[\d]+)/
+
     user = get_score(uid)
     case command
     when 'score'
+      puts "got score request for #{uid}: #{user[:score]}" if DEBUG
       body = user[:score].to_s
-      puts "got request for #{uid}: #{user[:score]}" if DEBUG
     when 'add'
+      puts "got add request for #{uid}: #{amount}" if DEBUG
+      next unless amount
       score = user[:score] + amount.to_i
       set_score(uid, score)
       body = score.to_s
     when 'set'
-      set_score(uid, amount)
-      body = score.to_s
+      puts "got set request for #{uid}: #{amount}" if DEBUG
+      next unless amount
+      set_score(uid, amount.to_i)
+      body = amount.to_s
     else
+      puts "got #{command} request" if DEBUG
       status = 404
       body = "Undefined url"
     end
