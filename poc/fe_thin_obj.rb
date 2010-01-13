@@ -47,22 +47,25 @@ class InfamyFE
     return [400, {'Content-Type' => 'text/plain'}, 'Error (command)'] unless command
     return [400, {'Content-Type' => 'text/plain'}, 'Error (uid)'] unless uid
 
-    ip_addr = $1 if env['HTTP_X_ORIGINATING_IP'] =~ /([\d]+\.[\d]+\.[\d]+\.[\d]+)/
+    ip_addr = $1 if env['HTTP_X_ORIGINATING_IP'] =~ /([\d]+\.[\d]+\.[\d]+\.[\d]+)/ || nil
 
     user = get_score(uid)
+    ip = get_score(ip_addr)
     case command
     when 'score'
       puts "got score request for #{uid}: #{user[:score]}" if DEBUG
       body = user[:score].to_s
     when 'add'
       puts "got add request for #{uid}: #{amount}" if DEBUG
-      next unless amount
+      return [400, {'Content-Type' => 'text/plain'}, 'Error (invalid amount)'] unless amount
       score = user[:score] + amount.to_i
       set_score(uid, score)
+      ip_score = ip[:score] + amount.to_i
+      set_score(ip_addr, ip_score)
       body = score.to_s
     when 'set'
       puts "got set request for #{uid}: #{amount}" if DEBUG
-      next unless amount
+      return [400, {'Content-Type' => 'text/plain'}, 'Error (invalid amount)'] unless amount
       set_score(uid, amount.to_i)
       body = amount.to_s
     else
