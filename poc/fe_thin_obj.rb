@@ -3,6 +3,7 @@ require 'memcached'
 require 'thin'
 require 'starling'
 require 'ruby-debug'
+require 'be_sqlite'
 
 DEBUG = true
 
@@ -14,14 +15,35 @@ class InfamyFE
     @queue = Starling.new("localhost:22122") if use_queue
   end
 
+  def add_to_audit(type, uid, value)
+    @queue.set('audit', [type, uid, value]) if @queue
+  end
+
   def get_score(uid)
     user = {:score => 0, :updated_at => Time.now, :stored_at => nil}
     begin
       user = @cache.get(uid)
     rescue Memcached::NotFound
+      abuser = Abuser.first(uid)
+      user[:score] = abuser[:score] if abuser
       puts "get_score: not found" if DEBUG
     end
     return user
+  end
+
+  def add_to_score(user, uid, ip, amount)
+    score = user[:score] + amount.to_i
+    set_score(uid, score)
+    if ip
+      ip_score = ip[:score] + amount.to_i
+      set_score(ip_addr, ip_score)
+    end
+    begin
+      add_to_audit(:add, uid, amount) if @queue
+    rescue
+      puts "add_to_score: error adding to queue"
+    end
+    score
   end
 
   def set_score(uid, score)
@@ -29,10 +51,11 @@ class InfamyFE
     begin
       @cache.set(uid, user)
     rescue
-      puts "error setting score"
+      puts "set_score: error setting score"
     end
     begin
       @queue.set('abusers', uid) if @queue
+      add_to_audit(:set, uid, score) if @queue
     rescue
       puts "error adding to queue"
     end
@@ -50,7 +73,7 @@ class InfamyFE
     ip_addr = $1 if env['HTTP_X_ORIGINATING_IP'] =~ /([\d]+\.[\d]+\.[\d]+\.[\d]+)/ || nil
 
     user = get_score(uid)
-    ip = get_score(ip_addr)
+    ip = get_score(ip_addr) if ip_addr
     case command
     when 'score'
       puts "got score request for #{uid}: #{user[:score]}" if DEBUG
@@ -58,11 +81,7 @@ class InfamyFE
     when 'add'
       puts "got add request for #{uid}: #{amount}" if DEBUG
       return [400, {'Content-Type' => 'text/plain'}, 'Error (invalid amount)'] unless amount
-      score = user[:score] + amount.to_i
-      set_score(uid, score)
-      ip_score = ip[:score] + amount.to_i
-      set_score(ip_addr, ip_score)
-      body = score.to_s
+      body = add_to_score(user, uid, ip, amount).to_s
     when 'set'
       puts "got set request for #{uid}: #{amount}" if DEBUG
       return [400, {'Content-Type' => 'text/plain'}, 'Error (invalid amount)'] unless amount

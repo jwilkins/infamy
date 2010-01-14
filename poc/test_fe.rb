@@ -2,7 +2,8 @@ require 'rubygems'
 require 'typhoeus'
 
 100.times {
-  response = Typhoeus::Request.get("http://127.0.0.1:4444/score/1:111")
+  response = Typhoeus::Request.get("http://127.0.0.1:4444/score/1:111", 
+                                   :headers => {"X-Originating-IP" => "10.1.1.1"})
 }
 
 score = 0

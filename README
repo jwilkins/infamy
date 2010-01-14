@@ -40,6 +40,10 @@ To add to a user's score (can be positive or negative):
 To add set a user's score to an arbitrary value
   http://localhost:4444/set/1:111/0
 
+If you set an 'X-Originating-IP' header when calling add, the amount
+will also be added to the IP specified in the header.
+eg: X-Originating-IP: 10.1.1.1
+
 Notes:
 - Memcache always stores official score for a given user.
 - User info is a hash which contains update time and score
