@@ -2,7 +2,7 @@ require 'rubygems'
 require 'dm-core'
 require 'starling'
 require 'memcache'
-require 'be_sqlite'
+require "#{File.dirname(__FILE__)}/../be_sqlite"
 
 # pull from starling
 starling = Starling.new('127.0.0.1:22122')

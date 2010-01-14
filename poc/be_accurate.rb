@@ -2,7 +2,7 @@ require 'rubygems'
 require 'dm-core'
 require 'starling'
 require 'memcache'
-require 'be_sqlite'
+require "#{File.dirname(__FILE__)}/../be_sqlite"
 require 'ruby-debug'
 
 # pull from starling

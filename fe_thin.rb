@@ -3,6 +3,7 @@ require 'memcached'
 require 'thin'
 require 'starling'
 require 'ruby-debug'
+
 require 'be_sqlite'
 
 DEBUG = true
@@ -89,6 +90,8 @@ class InfamyFE
       return [400, {'Content-Type' => 'text/plain'}, 'Error (invalid amount)'] unless amount
       set_score(uid, amount.to_i)
       body = amount.to_s
+    when 'did'
+      return [400, {'Content-Type' => 'text/plain'}, 'did not implemented'] unless amount
     else
       puts "got #{command} request" if DEBUG
       status = 404
