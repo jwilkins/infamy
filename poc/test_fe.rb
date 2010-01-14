@@ -2,15 +2,15 @@ require 'rubygems'
 require 'typhoeus'
 
 100.times {
-  response = Typhoeus::Request.get("http://127.0.0.1:4444/score/1:111", 
-                                   :headers => {"X-Originating-IP" => "10.1.1.1"})
+  response = Typhoeus::Request.get("http://127.0.0.1:4444/score/1:111") 
 }
 
 score = 0
 Typhoeus::Request.get("http://127.0.0.1:4444/set/1:111/#{score}")
-100.times {
+1000.times {
   amount = rand(20) - 10
-  Typhoeus::Request.get("http://127.0.0.1:4444/add/1:111/#{amount}")
+  Typhoeus::Request.get("http://127.0.0.1:4444/add/1:111/#{amount}",
+                        :headers => {"X-Originating-IP" => "10.1.1.1"})
   score += amount
 }
 

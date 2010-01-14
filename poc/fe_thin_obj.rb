@@ -15,10 +15,6 @@ class InfamyFE
     @queue = Starling.new("localhost:22122") if use_queue
   end
 
-  def add_to_audit(type, uid, value)
-    @queue.set('audit', [type, uid, value]) if @queue
-  end
-
   def get_score(uid)
     user = {:score => 0, :updated_at => Time.now, :stored_at => nil}
     begin
@@ -31,7 +27,11 @@ class InfamyFE
     return user
   end
 
-  def add_to_score(user, uid, ip, amount)
+  def add_to_audit(type, uid, value)
+    @queue.set('audit', [type, uid, value.to_i]) if @queue
+  end
+
+  def add_to_score(user, uid, ip, ip_addr, amount)
     score = user[:score] + amount.to_i
     set_score(uid, score)
     if ip
@@ -81,7 +81,7 @@ class InfamyFE
     when 'add'
       puts "got add request for #{uid}: #{amount}" if DEBUG
       return [400, {'Content-Type' => 'text/plain'}, 'Error (invalid amount)'] unless amount
-      body = add_to_score(user, uid, ip, amount).to_s
+      body = add_to_score(user, uid, ip, ip_addr, amount).to_s
     when 'set'
       puts "got set request for #{uid}: #{amount}" if DEBUG
       return [400, {'Content-Type' => 'text/plain'}, 'Error (invalid amount)'] unless amount

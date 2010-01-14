@@ -17,7 +17,6 @@ while true
   end
 
   begin
-    puts "storing #{uid}"
     user = cache.get(uid)
   rescue Memcached::NotFound
     puts "Error fetching user from memcache"
