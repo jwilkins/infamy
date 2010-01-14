@@ -13,18 +13,20 @@ class InfamyFE
     @queue = nil
     @cache = Memcached.new("localhost:11211")
     @queue = Starling.new("localhost:22122") if use_queue
+    #@be = :quick
+    @be = :accurate
   end
 
   def get_score(uid)
-    user = {:score => 0, :updated_at => Time.now, :stored_at => nil}
     begin
-      user = @cache.get(uid)
+      return @cache.get(uid)
     rescue Memcached::NotFound
+      user = {:score => 0, :updated_at => Time.now, :stored_at => nil}
       abuser = Abuser.first(uid)
       user[:score] = abuser[:score] if abuser
-      puts "get_score: not found" if DEBUG
+      puts "get_score: #{uid} not found" if DEBUG
+      return user
     end
-    return user
   end
 
   def add_to_audit(type, uid, value)
@@ -39,7 +41,7 @@ class InfamyFE
       set_score(ip_addr, ip_score)
     end
     begin
-      add_to_audit(:add, uid, amount) if @queue
+      add_to_audit(:add, uid, amount) if @queue && @be == :accurate
     rescue
       puts "add_to_score: error adding to queue"
     end
@@ -55,7 +57,7 @@ class InfamyFE
     end
     begin
       @queue.set('abusers', uid) if @queue
-      add_to_audit(:set, uid, score) if @queue
+      add_to_audit(:set, uid, score) if @queue && @be == :accurate
     rescue
       puts "error adding to queue"
     end
@@ -64,26 +66,26 @@ class InfamyFE
 
   def call(env)
     status = 200
-    ip_addr = '0.0.0.0'
+    ip_addr = nil
 
     nothing, command, uid, amount = env['PATH_INFO'].split('/')
     return [400, {'Content-Type' => 'text/plain'}, 'Error (command)'] unless command
     return [400, {'Content-Type' => 'text/plain'}, 'Error (uid)'] unless uid
 
-    ip_addr = $1 if env['HTTP_X_ORIGINATING_IP'] =~ /([\d]+\.[\d]+\.[\d]+\.[\d]+)/ || nil
+    ip_addr = $1 if env['HTTP_X_ORIGINATING_IP'] =~ /([\d]+\.[\d]+\.[\d]+\.[\d]+)/
 
     user = get_score(uid)
     ip = get_score(ip_addr) if ip_addr
     case command
     when 'score'
-      puts "got score request for #{uid}: #{user[:score]}" if DEBUG
+      #puts "got score request for #{uid}: #{user[:score]}" if DEBUG
       body = user[:score].to_s
     when 'add'
-      puts "got add request for #{uid}: #{amount}" if DEBUG
+      #puts "got add request for #{uid}: #{amount}" if DEBUG
       return [400, {'Content-Type' => 'text/plain'}, 'Error (invalid amount)'] unless amount
       body = add_to_score(user, uid, ip, ip_addr, amount).to_s
     when 'set'
-      puts "got set request for #{uid}: #{amount}" if DEBUG
+      #puts "got set request for #{uid}: #{amount}" if DEBUG
       return [400, {'Content-Type' => 'text/plain'}, 'Error (invalid amount)'] unless amount
       set_score(uid, amount.to_i)
       body = amount.to_s

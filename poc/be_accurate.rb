@@ -12,7 +12,7 @@ starling = Starling.new('127.0.0.1:22122')
 while true
   begin
     type, uid, value = starling.get('audit')
-    puts "got #{type}, #{uid}, #{value} from audit"
+    #puts "got #{type}, #{uid}, #{value} from audit"
   rescue
     sleep 10
     next
