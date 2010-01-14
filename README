@@ -25,10 +25,10 @@ Requirements:
 Running:
 --------
 - Start memcached
-- ruby fe_thin.rb
+- ruby fe_thin_obj.rb
 If you also want a database backing up memcache:
 - Start starling (starling -q /tmp/starling -P /tmp/starling.pid)
-- ruby be_sqlite.rb
+- ruby be_audit.rb
 
 Using:
 ------
