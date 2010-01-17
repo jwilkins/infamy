@@ -4,9 +4,9 @@ require 'starling'
 require 'memcache'
 
 ROOT_DIR=File.dirname(__FILE__)
-DataMapper.setup(:default, "sqlite3:#{ROOT_DIR}/abusers.sqlite3")
+DataMapper.setup(:default, "sqlite3:#{ROOT_DIR}/infamy.sqlite3")
 
-class Abuser
+class Infamy
   include DataMapper::Resource
   property :id,         Serial
   property :uid,        String, :key => true
@@ -15,6 +15,6 @@ class Abuser
   property :updated_at, DateTime
 end
 
-Abuser.auto_migrate!
+Infamy.auto_migrate!
 
 

@@ -15,31 +15,35 @@ class InfamyFE
     @cache = Memcached.new("localhost:11211")
     @queue = Starling.new("localhost:22122") if use_queue
     #@be = :quick
-    @be = :accurate
+    #@be = :accurate
+    @be = nil
   end
 
-  def get_score(uid)
+  def get_info(uid)
     begin
       return @cache.get(uid)
     rescue Memcached::NotFound
-      user = {:score => 0, :updated_at => Time.now, :stored_at => nil}
-      abuser = Abuser.first(uid)
-      user[:score] = abuser[:score] if abuser
-      puts "get_score: #{uid} not found" if DEBUG
-      return user
     end
+
+    info = {:score => 0, :updated_at => Time.now, :stored_at => nil}
+    if @be
+      info_db = Infamy.first(uid)
+      info[:score] = info_db[:score] if info_db
+      puts "get_info: #{uid} not found" if DEBUG
+    end
+    return info
   end
 
   def add_to_audit(type, uid, value)
     @queue.set('audit', [type, uid, value.to_i]) if @queue
   end
 
-  def add_to_score(user, uid, ip, ip_addr, amount)
-    score = user[:score] + amount.to_i
-    set_score(uid, score)
+  def add_to_score(uid, info, ip, info_ip, amount)
+    score = info[:score] + amount.to_i
+    set_score(uid, info, score)
     if ip
-      ip_score = ip[:score] + amount.to_i
-      set_score(ip_addr, ip_score)
+      ip_score = info_ip[:score] + amount.to_i
+      set_score(ip, info_ip, ip_score)
     end
     begin
       add_to_audit(:add, uid, amount) if @queue && @be == :accurate
@@ -49,46 +53,48 @@ class InfamyFE
     score
   end
 
-  def set_score(uid, score)
-    user = {:score => score.to_i, :updated_at => Time.now, :stored_at => nil}
+  def set_score(uid, info, score)
+    info[:score] = score.to_i
+    info[:updated_at] = Time.now
     begin
-      @cache.set(uid, user)
+      @cache.set(uid, info)
     rescue
       puts "set_score: error setting score"
     end
     begin
-      @queue.set('abusers', uid) if @queue
+      @queue.set('infamy', uid) if @queue
       add_to_audit(:set, uid, score) if @queue && @be == :accurate
     rescue
       puts "error adding to queue"
     end
-    return user
+    return info
   end
 
   def call(env)
     status = 200
     ip_addr = nil
 
-    nothing, command, uid, amount = env['PATH_INFO'].split('/')
+    command, uid, amount = env['PATH_INFO'][1..-1].split('/')
     return [400, {'Content-Type' => 'text/plain'}, 'Error (command)'] unless command
     return [400, {'Content-Type' => 'text/plain'}, 'Error (uid)'] unless uid
 
-    ip_addr = $1 if env['HTTP_X_ORIGINATING_IP'] =~ /([\d]+\.[\d]+\.[\d]+\.[\d]+)/
+    ip = $1 if env['HTTP_X_ORIGINATING_IP'] =~ /([\d]+\.[\d]+\.[\d]+\.[\d]+)/
 
-    user = get_score(uid)
-    ip = get_score(ip_addr) if ip_addr
+    info = get_info(uid)
+    info_ip = get_info(ip) if ip
+
     case command
     when 'score'
-      #puts "got score request for #{uid}: #{user[:score]}" if DEBUG
-      body = user[:score].to_s
+      #puts "got score request for #{uid}: #{info[:score]}" if DEBUG
+      body = info[:score].to_s
     when 'add'
       #puts "got add request for #{uid}: #{amount}" if DEBUG
       return [400, {'Content-Type' => 'text/plain'}, 'Error (invalid amount)'] unless amount
-      body = add_to_score(user, uid, ip, ip_addr, amount).to_s
+      body = add_to_score(uid, info, ip, info_ip, amount).to_s
     when 'set'
       #puts "got set request for #{uid}: #{amount}" if DEBUG
       return [400, {'Content-Type' => 'text/plain'}, 'Error (invalid amount)'] unless amount
-      set_score(uid, amount.to_i)
+      set_score(uid, info, amount.to_i)
       body = amount.to_s
     when 'did'
       return [400, {'Content-Type' => 'text/plain'}, 'did not implemented'] unless amount
@@ -102,4 +108,4 @@ class InfamyFE
   end
 end
 
-Thin::Server.start('127.0.0.1', 4444, InfamyFE.new(true))
+Thin::Server.start('127.0.0.1', 4444, InfamyFE.new(false))

@@ -25,6 +25,7 @@ Requirements:
 Running:
 --------
 - Start memcached
+  - tune per http://mituzas.lt/2008/12/25/memcached-for-small-objects/
 - ruby fe_thin.rb
 If you also want a database backing up memcache:
 - Start starling (starling -q /tmp/starling -P /tmp/starling.pid)

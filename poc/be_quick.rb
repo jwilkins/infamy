@@ -10,26 +10,26 @@ cache = MemCache.new("localhost:11211")
 
 while true
   begin
-    uid = starling.get('abusers')
+    uid = starling.get('infamy')
   rescue
     sleep 10
     next
   end
 
   begin
-    user = cache.get(uid)
+    info = cache.get(uid)
   rescue Memcached::NotFound
-    puts "Error fetching user from memcache"
+    puts "Error fetching info from memcache"
     next
   end
 
   begin
-    next if user[:stored_at] && user[:stored_at] > user[:updated_at]
-    abuser = Abuser.first(uid) || Abuser.new
-    abuser.update(:uid => uid, :score => user[:score], :updated_at => Time.now)
-    abuser.save
-    user[:stored_at] = Time.now
-    cache.set(uid, user)
+    next if info[:stored_at] && info[:stored_at] > info[:updated_at]
+    info_db = Infamy.first(uid) || Infamy.new
+    info_db.update(:uid => uid, :score => info[:score], :updated_at => Time.now)
+    info_db.save
+    #info[:stored_at] = Time.now
+    #cache.set(uid, info)
   rescue => e
     puts "Error writing score to db: #{e}"
     retry

@@ -7,7 +7,7 @@ require 'ruby-debug'
 
 # pull from starling
 starling = Starling.new('127.0.0.1:22122')
-#cache = MemCache.new("localhost:11211")
+cache = MemCache.new("localhost:11211")
 
 while true
   begin
@@ -20,17 +20,19 @@ while true
 
   begin
     now = Time.now
-    abuser = Abuser.first(uid)
-    if abuser
-      score = abuser[:score] + value.to_i if type == :add
+    info_db = Infamy.first(uid)
+    if info_db
+      score = info_db[:score] + value.to_i if type == :add
       score = value.to_i if type == :set
-      abuser.update(:uid => uid, :score => score, :updated_at => now)
+      info_db.update(:uid => uid, :score => score, :updated_at => now)
     else
-      abuser = Abuser.new(:uid => uid, :score => value.to_i, :created_at => now)
+      info_db = Infamy.new(:uid => uid, :score => value.to_i, 
+                           :updated_at => now, :created_at => now)
+      info_db.save
     end
-    abuser.save
-    #user[:stored_at] = Time.now
-    #cache.set(uid, user)
+    #info = cache.get(uid)
+    #info[:stored_at] = Time.now
+    #cache.set(uid, info)
   rescue => e
     puts "Error writing score to db: #{e}"
     retry
