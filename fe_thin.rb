@@ -1,6 +1,9 @@
 require 'rubygems'
 require 'memcached'
 require 'thin'
+#require 'ebb'
+#require 'unicorn'
+require 'rack'
 require 'starling'
 require 'ruby-debug'
 
@@ -108,4 +111,29 @@ class InfamyFE
   end
 end
 
-Thin::Server.start('127.0.0.1', 4444, InfamyFE.new(false))
+options = {}
+
+optparse = OptionParser.new do |opts|
+  opts.on( '-h', '--help', 'Display this screen' ) do
+    puts opts
+    exit
+  end
+  options[:be] = nil
+  opts.on( '-b', '--be BACKEND', "Specify backend (quick or accurate)" ) do |be|
+    if be == 'quick' || be == 'accurate'
+    options[:be] = f.to_sym
+  end
+end
+optparse.parse!
+
+# NOTE: Thin 1433 r/s (ab -c 50 -n 10000 http://127.0.0.1:8080/score/1:111)
+#Thin::Server.start('127.0.0.1', 4444, InfamyFE.new(false))
+
+# NOTE: Thin 1260 r/s (ab -c 50 -n 10000 http://127.0.0.1:8080/score/1:111)
+Rack::Handler::Thin.run InfamyFE.new(false), :Port => 4444, :Host => '127.0.0.1'
+
+# XXX: Ebb doesn't complete 10k requests from ab
+#Rack::Handler::Ebb.run InfamyFE.new(false), :Port => 4444, :Host => '127.0.0.1'
+
+# NOTE: Unicorn 1230 r/s (ab -c 50 -n 10000 http://127.0.0.1:8080/score/1:111)
+#Unicorn.run InfamyFE.new(false)

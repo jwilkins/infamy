@@ -45,10 +45,16 @@ If you set an 'X-Originating-IP' header when calling add, the amount
 will also be added to the IP specified in the header.
 eg: X-Originating-IP: 10.1.1.1
 
+Performance:
+------------
+- Server and benchmark both running on a MacBook Pro 2.53 GHz Core 2 Duo
+  - No backend, just memcache
+    - ab -c 50 -n 10000 http://127.0.0.1:4444/score/1:111
+    - 1726 r/s
+
 Notes:
-- Memcache always stores official score for a given user.
-- User info is a hash which contains update time and score
-- Use starling to add updates to a queue
-- Keep track of update time (updated_at) and time written to persistent
+- Info is a hash which contains score and update time
+- Uses starling to add updates to a queue
+- Keeps track of update time (updated_at) and time written to persistent
   storage (stored_at) in memcache record
 
